@@ -1,0 +1,15 @@
+setup.cfg
+setup.py
+import_v2_intraparis_to_dca/__init__.py
+import_v2_intraparis_to_dca/__main__.py
+import_v2_intraparis_to_dca/m_import_to_dca.py
+import_v2_intraparis_to_dca/m_import_to_dca_deals_with_versions.py
+import_v2_intraparis_to_dca/m_intraparis_descriptor.py
+import_v2_intraparis_to_dca/m_lambda_color.py
+import_v2_intraparis_to_dca.egg-info/PKG-INFO
+import_v2_intraparis_to_dca.egg-info/SOURCES.txt
+import_v2_intraparis_to_dca.egg-info/dependency_links.txt
+import_v2_intraparis_to_dca.egg-info/entry_points.txt
+import_v2_intraparis_to_dca.egg-info/not-zip-safe
+import_v2_intraparis_to_dca.egg-info/requires.txt
+import_v2_intraparis_to_dca.egg-info/top_level.txt

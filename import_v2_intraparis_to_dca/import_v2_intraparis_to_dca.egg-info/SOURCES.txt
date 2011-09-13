@@ -3,6 +3,7 @@ setup.py
 import_v2_intraparis_to_dca/__init__.py
 import_v2_intraparis_to_dca/__main__.py
 import_v2_intraparis_to_dca/m_import_to_dca.py
+import_v2_intraparis_to_dca/m_import_to_dca_appcode_stuff.py
 import_v2_intraparis_to_dca/m_import_to_dca_deals_with_versions.py
 import_v2_intraparis_to_dca/m_intraparis_descriptor.py
 import_v2_intraparis_to_dca/m_lambda_color.py

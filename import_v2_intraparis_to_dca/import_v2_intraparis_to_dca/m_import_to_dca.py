@@ -7,49 +7,18 @@ from lxml.etree import fromstring,tostring
 from html5lib import HTMLParser
 from html5lib import treebuilders
 import re
+from m_deal_with_loop import DealWithLoop
+
+from m_import_to_dca_appcode_stuff import *
+from m_import_to_dca_env_stuff import *
+from m_import_to_dca_type_composant_stuff import *
+from m_import_to_dca_version_for_type_composant_stuff import *
+
 from m_import_to_dca_deals_with_versions import deals_with_version
-import copy
+
 from colors import *
-import sys
 
 locale.setlocale(locale.LC_ALL, "")
-
-class deal_with_loop(object):
-	def __init__( self, triplet_indexes ):
-		# triplet_indexes est un liste contenant
-		# en premier paramètre, l'objet instancié à partir de ImportToDCA
-		# en second paramètre, une chaine de caractère contenant le nom du paramètre
-		# définissant si la boucle est active
-		# en troisieme paramètre, une chaine de caractère contenant le nom du 
-		# paramètre contenant les références déjà créées / récupéréés
-
-       		self._triplet_indexes	  	= triplet_indexes
-       		self._i2dca		  	= triplet_indexes[0]
-                self._is_on_loop_sav 	 	= getattr( self._i2dca, self._triplet_indexes[1] )
-
-		if self._triplet_indexes[2].__class__ == dict:
-                	self._sav          	= getattr( self._i2dca, self._triplet_indexes[2] ).copy()
-		elif self._triplet_indexes[2].__class__ == list:
-			self._sav               = getattr( self._i2dca, self._triplet_indexes[2][ : ] )
-		else:
-			self._sav		= getattr( self._i2dca, copy.copy( self._triplet_indexes[2] ) )	
-		setattr( self._i2dca, triplet_indexes[1], True )
-
-        def __enter__( self ):
-                return self
-
-        def __exit__( self, *exc_info ):
-
-		setattr( self._i2dca, self._triplet_indexes[1], self._is_on_loop_sav )
-
-		if self._sav.__class__ == dict:
-			setattr( self._i2dca, self._triplet_indexes[2], self._sav.copy() )
-		elif self._sav.__class__ == list:
-			setattr( self._i2dca, self._triplet_indexes[2], self._sav[ : ] )
-		else:
-			setattr( self._i2dca, self._triplet_indexes[2], copy.copy( self._sav ) )
-
-
 
 class ImportToDCA:
 
@@ -68,7 +37,7 @@ class ImportToDCA:
 	def __init__( self, dca_servername = None, cookie_membre = None, deals_with_version_funcname = _deals_with_version_default_funcname ):
 		self._httpconn = None
 
-		self._print_debug = True
+		self._print_debug = False
 
 		# Dictionnaire stockant des référentiels
 		self._d_env_ref = None
@@ -97,6 +66,13 @@ class ImportToDCA:
 		# Initialisation des données techniques de connexions
 		self.set_dca_servername( dca_servername )
 		self.set_cookie_membre( cookie_membre )
+
+		# Section d'activation du débogage
+		self._is_APP_in_debug = True
+		self._is_ENV_in_debug = True
+		self._is_TYPE_COMPOSANT_in_debug = True
+		self._is_VERSION_FOR_TYPE_COMPOSANT_in_debug = True
+		self._is_DEPLOYMENT_SERVERNAME_in_debug = True
 
 	#############
 	# INTERCEPTOR
@@ -138,375 +114,19 @@ class ImportToDCA:
                 return wrapped
 
 
-	def process_with_env_ref_loaded_interceptor( func ):
-		""" Décorateur valorisant la variable self_.d_env_ref pour la fonction utilisée"""
-                def wrapped( self, *args, **kwargs ):
-
-			if self._print_debug: print red( '@%s(%s)\t|%s| <-' ) % ( self.process_with_env_ref_loaded_interceptor.func_name, func.func_name, 'process_with_env_ref_loaded_interceptor.wrapped' )
-
-			result = None
-
-			if not self._d_env_ref:
-				# Avant traitement, créé le référentiel au besoin"
-				self._d_env_ref = self.load_env_ref( *args, **kwargs )
-
-				result = func( self, *args, **kwargs )
-
-				# Après traitement, détruit le référentiel
-				self._d_env_ref = None
-			else:
-				# Si le référentiel existait, on ne fait que le traitement
-				# Surtout, on ne détruit pas le référentiel
-				result = func( self, *args, **kwargs )
-
-			if self._print_debug: print red( '@%s(%s)\t|%s| -> %s' ) % ( self.process_with_env_ref_loaded_interceptor.func_name, func.func_name, 'process_with_env_ref_loaded_interceptor.wrapped', result )
-
-			return result
-
-                return wrapped
-
-
-        def app_created_on_loop_interceptor( func ):
+        def filter_versions_for_type_composant_on_loop_interceptor( func ):
 
                 def wrapped( self, *args, **kwargs ):
 
-			if self._print_debug: print green( '@%s(%s)\t|%s| <-' ) % ( self.app_created_on_loop_interceptor.func_name, func.func_name, 'app_created_on_loop_interceptor.wrapped' )
+			if self._print_debug: print yellow( '@%s(%s)\t|%s| <-' ) % ( self.filter_versions_for_type_composant_on_loop_interceptor.func_name, func.func_name, 'filter_versions_for_type_composant_on_loop_interceptor.wrapped' )
 
 			result = None
 
-                        with deal_with_loop( [ self, '_is_app_on_loop', '_d_app_on_loop_created' ] ):
+                        with DealWithLoop( [ self, '_is_deals_with_versions_on_loop', '_l_dwv' ] ):
 
                                 result = func( self, *args, **kwargs )
 
-				if self._print_debug: print green( '@%s(%s)\t|%s| -> %s' ) % ( self.app_created_on_loop_interceptor.func_name, func.func_name, 'app_created_on_loop_interceptor.wrapped', result )
-
-				return result
-
-                return wrapped
-
-
-        def create_app_if_needed( func ):
-
-                def wrapped( self, *args, **kwargs ):
-
-			if self._print_debug: print green( '@%s(%s)\t|%s| <-' ) % ( self.create_app_if_needed.func_name, func.func_name, 'create_app_if_needed.wrapped' )
-
-                        result = None
-
-	                app_code = kwargs[ 'app_code' ]
-
-			if self._is_app_on_loop:
-				if app_code not in self._d_app_on_loop_created.keys():
-                        		self.create_app( *args, **kwargs )
-					self._d_app_on_loop_created[ app_code ] = app_code
-
-			result = func( self, *args, **kwargs )
-
-			if self._print_debug: print green( '@%s(%s)\t|%s| -> %s' ) % ( self.create_app_if_needed.func_name, func.func_name, 'create_app_if_needed.wrapped', result )
-
-                        return result
-
-                return wrapped
-
-
-        def process_with_app_exists_interceptor( attempt ):
-                """ d?corateur r?alisant la fonction func si l'existence
-                    de l'env est ? la valeur attempt"""
-                def wrapper( func ):
-
-                        def wrapped( self, *args, **kwargs ):
-
-				if self._print_debug: print green( '@%s(%s)\t|%s| <-' ) % ( self.process_with_app_exists_interceptor.func_name, func.func_name, 'process_with_app_exists_interceptor.wrapper.wrapped' )
-
-				result = None
-
-		                app_code = kwargs[ 'app_code' ]
-
-                                result = None
-				app_exists = False
-	                        if self._is_app_on_loop:
-                                	if app_code in self._d_app_on_loop_created.keys():
-						app_exists = True
-					else:
-						app_exists = self.app_exists( *args, **kwargs )
-				else:
-					app_exists = self.app_exists( *args, **kwargs )
-
-				if app_exists:
-					self._d_app_on_loop_created[ app_code ] = app_code
-
-                                if app_exists == attempt:
-                                        result = func( self, *args, **kwargs )
-
-				if self._print_debug: print green( '@%s(%s)\t|%s| -> %s' ) % ( self.process_with_app_exists_interceptor.func_name, func.func_name, 'process_with_app_exists_interceptor.wrapper.wrapped', result )
-
-				return result
-
-                        return wrapped
-
-                return wrapper
-
-
-        def env_created_on_loop_interceptor( func ):
-
-                def wrapped( self, *args, **kwargs ):
-
-			if self._print_debug: print red( '@%s(%s)\t|%s| <-' ) % ( self.env_created_on_loop_interceptor.func_name, func.func_name, 'env_created_on_loop_interceptor.wrapped' )
-
-			result = None
-
-                        with deal_with_loop( [ self, '_is_env_on_loop', '_d_env_on_loop_created' ] ):
-
-                                result = func( self, *args, **kwargs )
-				if self._print_debug: print red( '@%s(%s)\t|%s| -> %s' ) % ( self.env_created_on_loop_interceptor.func_name, func.func_name, 'env_created_on_loop_interceptor.wrapped', result )
-				return result
-
-                return wrapped
-
-
-        def create_env_for_app_if_needed( func ):
-
-                def wrapped( self, *args, **kwargs ):
-
-			if self._print_debug: print red( '@%s(%s)\t|%s| <-' ) % ( self.create_env_for_app_if_needed.func_name, func.func_name, 'create_env_for_app_if_needed.wrapped' )
-
-                        result = None
-
-	                app_code = kwargs[ 'app_code' ]
-        	        type_env = kwargs[ 'type_env' ]
-                	name_env = kwargs[ 'name_env' ]
-
-			id_env = 0
-
-			key_env = 'APP=%s,TYPE_ENV=%s,NAME_ENV=%s' %( app_code, type_env, name_env)
-
-                        if self._is_env_on_loop:
-                                if key_env not in self._d_env_on_loop_created.keys():
-                        		id_env = self.create_env_for_app( *args, **kwargs )
-                                        self._d_env_on_loop_created[ key_env ] = id_env
-
-                        result = func( self, *args, **kwargs )
-
-			if self._print_debug: print red( '@%s(%s)\t|%s| -> %s' ) % ( self.create_env_for_app_if_needed.func_name, func.func_name, 'create_env_for_app_if_needed.wrapped', result )
-                        return result
-
-                return wrapped
-
-
-	def process_with_env_exists_interceptor( attempt ):
-		""" décorateur réalisant la fonction func si l'existence
-		    de l'env est à la valeur attempt"""
-		def wrapper( func ):
-
-			def wrapped( self, *args, **kwargs ):
-
-				if self._print_debug: print red( '@%s(%s)\t|%s| <-' ) % ( self.process_with_env_exists_interceptor.func_name, func.func_name, 'process_with_env_exists_interceptor.wrapper.wrapped' )
-
-				result = None
-
-		                app_code = kwargs[ 'app_code' ]
-                		type_env = kwargs[ 'type_env' ]
-                		name_env = kwargs[ 'name_env' ]
-
-				env_exists = False
-
-				key_env = 'APP=%s,TYPE_ENV=%s,NAME_ENV=%s' %( app_code, type_env, name_env)
-
-				if self._is_env_on_loop:
-					if key_env in self._d_env_on_loop_created.keys():
-						result = self._d_env_on_loop_created[ key_env ]
-						env_exists = True 
-					else:
-						try:
-                                       			result = self.get_id_env_for_app( *args, **kwargs )
-                                       	 		env_exists = True
-							self._d_env_on_loop_created[ key_env ] = id_env
-                                		except:
-							pass
-				else:
-                        		try:
-                        			result = self.get_id_env_for_app( *args, **kwargs )
-						env_exists = True 
-                        		except:
-                                		pass
-
-				if env_exists == attempt:
-					result = func( self, *args, **kwargs )
-
-				if self._print_debug: print red( '@%s(%s)\t|%s| -> %s' ) % ( self.process_with_env_exists_interceptor.func_name, func.func_name, 'process_with_env_exists_interceptor.wrapper.wrapped', result )
-
-				return result
-
-			return wrapped
-
-		return wrapper
-
-
-        def process_with_type_composant_ref_loaded_interceptor( func ):
-                """ Décorateur valorisant la variable self_._d_type_composant_ref pour la fonction utilisée"""
-                def wrapped( self, *args, **kwargs ):
-
-			if self._print_debug: print cyan( '@%s(%s)\t|%s| <-' ) % ( self.process_with_type_composant_ref_loaded_interceptor.func_name, func.func_name, 'process_with_type_composant_ref_loaded_interceptor.wrapped' )
-
-			result = None
-
-                        if not self._d_type_composant_ref:
-                                # Avant traitement, créé le référentiel au besoin
-                                self._d_type_composant_ref = self.load_type_composant_ref( *args, **kwargs )
-
-                                result = func( self, *args, **kwargs)
-
-                                # Après traitement, détruit le référentiel
-                                self._d_type_composant_ref = None
-                        else:
-                                # Si le référentiel existait, on ne fait que le traitement
-                                # Surtout, on ne détruit pas le référentiel
-                                result = func( self, *args, **kwargs)
-
-			if self._print_debug: print cyan( '@%s(%s)\t|%s| -> %s' ) % ( self.process_with_type_composant_ref_loaded_interceptor.func_name, func.func_name, 'process_with_type_composant_ref_loaded_interceptor.wrapped', result )
-
-                        return result
-
-                return wrapped
-
-
-        def process_with_version_for_type_composant_loaded_interceptor( func ):
-		""" Décorateur valorisant la variable self_._d_type_composant_ref [ type_composant ]
-		    type_composant étant passé par la variables kwargs"""
-                def wrapped( self, *args, **kwargs ):
-
-			if self._print_debug: print yellow( '@%s(%s)\t|%s| <-' ) % ( self.process_with_version_for_type_composant_loaded_interceptor.func_name, func.func_name, 'process_with_version_for_type_composant_loaded_interceptor.wrapped' )
-
-	                result = None
-
-			type_composant = kwargs[ 'type_composant' ]
-
-	                if not self._d_type_composant_ref[ type_composant ][ 'versions' ]:
-				print '\t\tRécupération de self._d_type_composant_ref[ %s ]' % ( type_composant )	
-				self._d_type_composant_ref[ type_composant ][ 'versions' ] = self.get_all_id_version_for_type_composant( *args, **kwargs )
-                      		result = func( self, *args, **kwargs)
-                      	else:
-                      		result = func( self, *args, **kwargs)
-
-			if self._print_debug: print yellow( '@%s(%s)\t|%s| -> %s' ) % ( self.process_with_version_for_type_composant_loaded_interceptor.func_name, func.func_name, 'process_with_version_for_type_composant_loaded_interceptor.wrapped', result )
-
-                      	return result
-
-                return wrapped
-
-
-        def version_for_type_composant_created_on_loop_interceptor( func ):
-
-                def wrapped( self, *args, **kwargs ):
-
-			if self._print_debug: print yellow( '@%s(%s)\t|%s| <-' ) % ( self.version_for_type_composant_created_on_loop_interceptor.func_name, func.func_name, 'version_for_type_composant_created_on_loop_interceptor.wrapped' )
-
-			result = None
-
-                        with deal_with_loop( [ self, '_is_version_on_loop', '_d_version_on_loop_created' ] ):
-
-                                result = func( self, *args, **kwargs )
-
-				if self._print_debug: print yellow( '@%s(%s)\t|%s| -> %s' ) % ( self.version_for_type_composant_created_on_loop_interceptor.func_name, func.func_name, 'version_for_type_composant_created_on_loop_interceptor.wrapped', result )
-
-                                return result
-
-                return wrapped
-
-
-        def create_version_for_type_composant_if_needed( func ):
-
-                def wrapped( self, *args, **kwargs ):
-
-			if self._print_debug: print yellow( '@%s(%s)\t|%s| <-' ) % ( self.create_version_for_type_composant_if_needed.func_name, func.func_name, 'create_version_for_type_composant_if_needed.wrapped' )
-
-			result = None
-
-			type_composant 		= kwargs[ 'type_composant' ]
-			version_composant 	= kwargs[ 'version_composant' ]
-			key_version_composant   = 'TYPE_COMPOSANT=%s,VERSION_COMPOSANT=%s' % ( type_composant, version_composant )
-
-			print 'create_version_for_type_composant_if_needed %s' % version_composant
-
-                        id_version = 0
-
-                        if self._is_version_on_loop:
-                                if key_version_composant not in self._d_version_on_loop_created.keys():
-                                        id_version = self.create_version_for_type_composant( *args, **kwargs )
-                                        self._d_version_on_loop_created[ key_version_composant ] = id_version
-
-                        result = func( self, *args, **kwargs )
-
-			if self._print_debug: print yellow( '@%s(%s)\t|%s| -> %s' ) % ( self.create_version_for_type_composant_if_needed.func_name, func.func_name, 'create_version_for_type_composant_if_needed.wrapped', result )
-
-                        return result
-
-                return wrapped
-
-
-        def process_with_version_for_type_composant_exists_interceptor( attempt ):
-                """ décorateur réalisant la fonction func si l'existence
-                    de la version est à la valeur attempt"""
-                def wrapper( func ):
-
-                        def wrapped( self, *args, **kwargs ):
-
-				if self._print_debug: print yellow( '@%s(%s)\t|%s| <-' ) % ( self.process_with_version_for_type_composant_exists_interceptor.func_name, func.func_name, 'process_with_version_for_type_composant_exists_interceptor.wrapper.wrapped' )
-
-                                result = None
-
-				print kwargs
-
-				type_composant 		= kwargs[ 'type_composant' ]
-				version_composant 	= kwargs[ 'version_composant' ]
-				key_version_composant   = 'TYPE_COMPOSANT=%s,VERSION_COMPOSANT=%s' % ( type_composant, version_composant )
-
-				print self._d_version_on_loop_created
-				print type_composant
-				print version_composant
-				print key_version_composant
-
-                                version_exists = False
-				l_versions = None
-                                if self._is_version_on_loop:
-                                        if key_version_composant in self._d_version_on_loop_created.keys():
-                                                version_exists = True
-                                        else:
-						l_versions = self.get_all_id_version_for_type_composant( *args, **kwargs )
-						version_exists = version_composant in l_versions
-                                else:
-					l_versions = self.get_all_id_version_for_type_composant( *args, **kwargs )
-					version_exists = version_composant in l_versions
-
-                                if version_exists:
-                                        self._d_version_on_loop_created[ key_version_composant ] = version_composant
-
-                                if version_exists == attempt:
-                                        result = func( self, *args, **kwargs )
-
-				print self._d_version_on_loop_created
-				if self._print_debug: print yellow( '@%s(%s)\t|%s| -> %s' ) % ( self.process_with_version_for_type_composant_exists_interceptor.func_name, func.func_name, 'process_with_version_for_type_composant_exists_interceptor.wrapper.wrapped', result )
-
-                                return result
-
-                        return wrapped
-
-                return wrapper
-
-
-        def deals_with_versions_for_type_composant_on_loop_interceptor( func ):
-
-                def wrapped( self, *args, **kwargs ):
-
-			if self._print_debug: print yellow( '@%s(%s)\t|%s| <-' ) % ( self.deals_with_versions_for_type_composant_on_loop_interceptor.func_name, func.func_name, 'deals_with_versions_for_type_composant_on_loop_interceptor.wrapped' )
-
-			result = None
-
-                        with deal_with_loop( [ self, '_is_deals_with_versions_on_loop', '_l_dwv' ] ):
-
-                                result = func( self, *args, **kwargs )
-
-				if self._print_debug: print yellow( '@%s(%s)\t|%s| -> %s' ) % ( self.deals_with_versions_for_type_composant_on_loop_interceptor.func_name, func.func_name, 'deals_with_versions_for_type_composant_on_loop_interceptor.wrapped', result )
+				if self._print_debug: print yellow( '@%s(%s)\t|%s| -> %s' ) % ( self.filter_versions_for_type_composant_on_loop_interceptor.func_name, func.func_name, 'filter_versions_for_type_composant_on_loop_interceptor.wrapped', result )
 
                                 return result
 
@@ -584,7 +204,7 @@ class ImportToDCA:
 	@app_created_on_loop_interceptor
 	@env_created_on_loop_interceptor
 	@version_for_type_composant_created_on_loop_interceptor
-	@deals_with_versions_for_type_composant_on_loop_interceptor
+	@filter_versions_for_type_composant_on_loop_interceptor
 	def import_to_dca( self, d_applis, *args, **kwargs ):
 
 			if self._print_debug: print blue( '\t\t\t%s(...)\t|%s| <-' ) % ( self.import_to_dca.func_name, 'import_to_dca' )

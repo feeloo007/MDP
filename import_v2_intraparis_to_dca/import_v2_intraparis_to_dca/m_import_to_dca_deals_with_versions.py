@@ -88,7 +88,7 @@ class deals_with_version:
 
 		def format_choice( select_string, selectorcolorfunc, d_suffix_desc, max_desc_size ):
 
-			return None
+			#return None
 
 			l_select_choice_string = []
 

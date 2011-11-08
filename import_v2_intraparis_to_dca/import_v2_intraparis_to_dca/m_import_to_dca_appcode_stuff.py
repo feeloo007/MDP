@@ -6,21 +6,6 @@ from colors import *
 
 locale.setlocale(locale.LC_ALL, "")
 
-
-#def app_created_on_loop_interceptor( func ):
-#
-#	@debug_decorator( 'app_created_on_loop_interceptor', 'app_created_on_loop_interceptor.wrapped', '_is_APP_in_debug', green )
-#	def wrapped( self, *args, **kwargs ):
-#	
-#                result = None
-#
-#                with DealWithLoop( [ self, '_is_app_on_loop', '_d_app_on_loop_created' ] ):
-#
-#                	result = func( self, *args, **kwargs )
-#                       return result
-#
-#	return wrapped
-
 def app_created_on_loop_interceptor( func ):
 
         @debug_decorator( 'app_created_on_loop_interceptor', 'app_created_on_loop_interceptor.wrapped', '_is_APP_in_debug', green )
@@ -30,7 +15,6 @@ def app_created_on_loop_interceptor( func ):
 		return func( self, *args, **kwargs )
 
         return wrapped
-
 
 
 def create_app_if_needed( func ):
@@ -67,7 +51,6 @@ def process_with_app_exists_interceptor( attempt ):
 
                         app_code = kwargs[ 'app_code' ]
 
-                        result = None
                         app_exists = False
                         if self._is_app_on_loop:
                                 if app_code in self._d_app_on_loop_created.keys():

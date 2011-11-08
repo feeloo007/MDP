@@ -75,7 +75,7 @@ class IntraparisDescriptorToDict:
 							'deployment_servername_composant': deployment_servername,
 							'name_composant': u'%s'.encode( 'UTF-8' ) % ( datas.group('HTTPD_USERNAME') ),
 							'desc_composant': u'écoute sur %s'.encode( 'UTF-8' ) % ( datas.group('HTTPD_IP') ),
-							'version_composant' : None
+							'version_composant' : '2.2.3'
 						}
 					],
                                 'TOMCAT':
@@ -84,9 +84,9 @@ class IntraparisDescriptorToDict:
                                                 	'username_composant' : datas.group('TOMCAT_USERNAME'),
                                                 	'ip_composant': datas.group('TOMCAT_IP'),
                                                 	'deployment_servername_composant': deployment_servername,
-                                                	'name_composant': u'%s'.encode( 'UTF-8' ) % ( datas.group('TOMCAT_USERNAME') ),
+                                                	'name_composant': u'%s - tomcat'.encode( 'UTF-8' ) % ( datas.group('TOMCAT_USERNAME') ),
                                                 	'desc_composant': u'écoute sur %s'.encode( 'UTF-8' ) % ( datas.group('TOMCAT_IP') ),
-                                                	'version_composant' : None
+                                                	'version_composant' : '6.0.29'
                                         	}
 					],
                                 'JDK':
@@ -97,7 +97,7 @@ class IntraparisDescriptorToDict:
                                                 	'deployment_servername_composant': deployment_servername,
                                                 	'name_composant': u'%s - jdk'.encode( 'UTF-8' ) % ( datas.group('TOMCAT_USERNAME') ),
                                                 	'desc_composant': u'écoute sur %s'.encode( 'UTF-8' ) % ( datas.group('TOMCAT_IP') ),
-                                                	'version_composant' : None
+                                                	'version_composant' : '1.6.0_23'
                                         	}
 					],
                                 'MYSQL':
@@ -108,7 +108,7 @@ class IntraparisDescriptorToDict:
                                                 	'deployment_servername_composant': deployment_servername,
                                                 	'name_composant': u'%s'.encode( 'UTF-8' ) % ( datas.group('MYSQL_USERNAME') ),
                                                 	'desc_composant': u'écoute sur %s'.encode( 'UTF-8' ) % ( datas.group('MYSQL_IP') ),
-                                                	'version_composant' : '5.1.42 @@TEST@@'
+                                                	'version_composant' : '5.0.77'
                                         	}
 					],
 			}

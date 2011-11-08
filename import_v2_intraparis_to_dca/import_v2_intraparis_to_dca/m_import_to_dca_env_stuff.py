@@ -61,7 +61,7 @@ def create_env_for_app_if_needed( func ):
 
                 id_env = 0
 
-                key_env = 'APP=%s,TYPE_ENV=%s,NAME_ENV=%s' %( app_code, type_env, name_env)
+                key_env = 'APP=%s,TYPE_ENV=%s,NAME_ENV=%s' %( app_code, type_env, name_env )
 
                 if self._is_env_on_loop:
                         if key_env not in self._d_env_on_loop_created.keys():
@@ -97,18 +97,18 @@ def process_with_env_exists_interceptor( attempt ):
 
                         if self._is_env_on_loop:
                                 if key_env in self._d_env_on_loop_created.keys():
-                                        result = self._d_env_on_loop_created[ key_env ]
+                                        id_env = self._d_env_on_loop_created[ key_env ]
                                         env_exists = True
                                 else:
                                         try:
-                                                result = self.get_id_env_for_app( *args, **kwargs )
+                                                id_env = self.get_id_env_for_app( *args, **kwargs )
                                                 env_exists = True
                                                 self._d_env_on_loop_created[ key_env ] = id_env
                                         except:
                                                 pass
                         else:
                                 try:
-                                        result = self.get_id_env_for_app( *args, **kwargs )
+                                        id_env = self.get_id_env_for_app( *args, **kwargs )
                                         env_exists = True
                                 except:
                                         pass

@@ -15,6 +15,7 @@ l_modules_to_load = 	[
 					'm_import_to_dca_type_composant_stuff',
 					'm_import_to_dca_version_for_type_composant_stuff',
 					'm_import_to_dca',
+					'm_import_to_dca_deployment_servername_stuff',
 			]
 
 for s_m in l_modules_to_load:
@@ -32,3 +33,4 @@ from m_import_to_dca import *
 from m_import_to_dca_appcode_stuff import *
 from m_lambda_color import *
 from m_import_to_dca_deals_with_versions import *
+from m_import_to_dca_deployment_servername_stuff import *

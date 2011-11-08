@@ -58,14 +58,16 @@ def create_version_for_type_composant_if_needed( func ):
                 version_composant       = kwargs[ 'version_composant' ]
                 key_version_composant   = 'TYPE_COMPOSANT=%s,VERSION_COMPOSANT=%s' % ( type_composant, version_composant )
 
-                print 'create_version_for_type_composant_if_needed %s' % version_composant
-
                 id_version = 0
 
                 if self._is_version_on_loop:
                         if key_version_composant not in self._d_version_on_loop_created.keys():
                                 id_version = self.create_version_for_type_composant( *args, **kwargs )
-                                self._d_version_on_loop_created[ key_version_composant ] = id_version
+                		self._d_version_on_loop_created[ key_version_composant ] = id_version
+			else:
+				id_version = self._d_version_on_loop_created[ key_version_composant ]
+		else:
+			id_version = self.create_version_for_type_composant( *args, **kwargs )
 
                 result = func( self, *args, **kwargs )
 
@@ -85,16 +87,9 @@ def process_with_version_for_type_composant_exists_interceptor( attempt ):
 
                         result = None
 
-                        print kwargs
-
                         type_composant          = kwargs[ 'type_composant' ]
                         version_composant       = kwargs[ 'version_composant' ]
                         key_version_composant   = 'TYPE_COMPOSANT=%s,VERSION_COMPOSANT=%s' % ( type_composant, version_composant )
-
-                        print self._d_version_on_loop_created
-                        print type_composant
-                        print version_composant
-                        print key_version_composant
 
                         version_exists = False
                         l_versions = None
@@ -113,8 +108,6 @@ def process_with_version_for_type_composant_exists_interceptor( attempt ):
 
                         if version_exists == attempt:
                                 result = func( self, *args, **kwargs )
-
-                        print self._d_version_on_loop_created
 
                         return result
 

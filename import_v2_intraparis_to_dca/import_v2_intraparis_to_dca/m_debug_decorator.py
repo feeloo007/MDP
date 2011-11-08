@@ -24,6 +24,7 @@ def debug_decorator( real_name_func, real_stack, is_in_debug, color = white ):
 				try:
 
 					print color( '@%s(%s)\t|%s| <-' ) % ( real_name_func, func.func_name, real_stack )
+					#print color( '%s' ) % ( kwargs )
 
 					result = func( self, *args, **kwargs )
 

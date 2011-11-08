@@ -13,7 +13,9 @@ def main():
 	intraparis_descriptor=IntraparisDescriptor.get_intraparis_descriptor('dps50', 'v2r7-intraparis.mdp', '22', [ '/home/dps50/scripts/deploiement/prod.topo', '/home/dps50/scripts/deploiement/recette.topo' ], d_applis )
 
 	dest_dca = ImportToDCA( 'dpr-r7-suividca.mdp', 'pgoncalves', deals_with_version_funcname = 'interactive_select_version_for_type_composant' )
+	#dest_dca = ImportToDCA( 'dpr-pr-suividca.mdp', 'pgoncalves', deals_with_version_funcname = 'interactive_select_version_for_type_composant' )
 	#dest_dca = ImportToDCA( 'dpr-r7-suividca.mdp', 'pgoncalves', deals_with_version_funcname = 'reject_unknown_version_for_type_composant' )
+
 	dest_dca.import_to_dca( d_applis )	
 
 if __name__ == "__main__":

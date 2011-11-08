@@ -13,6 +13,7 @@ from m_import_to_dca_appcode_stuff import *
 from m_import_to_dca_env_stuff import *
 from m_import_to_dca_type_composant_stuff import *
 from m_import_to_dca_version_for_type_composant_stuff import *
+from m_import_to_dca_deployment_servername_stuff import *
 
 from m_import_to_dca_deals_with_versions import deals_with_version
 
@@ -42,6 +43,7 @@ class ImportToDCA:
 		# Dictionnaire stockant des référentiels
 		self._d_env_ref = None
 		self._d_type_composant_ref = None
+		self._d_deployment_servername_ref = None
 
 		self._deals_with_version_default_funcname = deals_with_version_funcname
 
@@ -68,11 +70,11 @@ class ImportToDCA:
 		self.set_cookie_membre( cookie_membre )
 
 		# Section d'activation du débogage
-		self._is_APP_in_debug = True
-		self._is_ENV_in_debug = True
-		self._is_TYPE_COMPOSANT_in_debug = True
-		self._is_VERSION_FOR_TYPE_COMPOSANT_in_debug = True
-		self._is_DEPLOYMENT_SERVERNAME_in_debug = True
+		self._is_APP_in_debug = False
+		self._is_ENV_in_debug = False
+		self._is_TYPE_COMPOSANT_in_debug = False
+		self._is_VERSION_FOR_TYPE_COMPOSANT_in_debug = False
+		self._is_DEPLOYMENT_SERVERNAME_in_debug = False
 
 	#############
 	# INTERCEPTOR
@@ -118,7 +120,7 @@ class ImportToDCA:
 
                 def wrapped( self, *args, **kwargs ):
 
-			if self._print_debug: print yellow( '@%s(%s)\t|%s| <-' ) % ( self.filter_versions_for_type_composant_on_loop_interceptor.func_name, func.func_name, 'filter_versions_for_type_composant_on_loop_interceptor.wrapped' )
+			if self._is_VERSION_FOR_TYPE_COMPOSANT_in_debug: print yellow( '@%s(%s)\t|%s| <-' ) % ( self.filter_versions_for_type_composant_on_loop_interceptor.func_name, func.func_name, 'filter_versions_for_type_composant_on_loop_interceptor.wrapped' )
 
 			result = None
 
@@ -126,7 +128,7 @@ class ImportToDCA:
 
                                 result = func( self, *args, **kwargs )
 
-				if self._print_debug: print yellow( '@%s(%s)\t|%s| -> %s' ) % ( self.filter_versions_for_type_composant_on_loop_interceptor.func_name, func.func_name, 'filter_versions_for_type_composant_on_loop_interceptor.wrapped', result )
+				if self._is_VERSION_FOR_TYPE_COMPOSANT_in_debug: print yellow( '@%s(%s)\t|%s| -> %s' ) % ( self.filter_versions_for_type_composant_on_loop_interceptor.func_name, func.func_name, 'filter_versions_for_type_composant_on_loop_interceptor.wrapped', result )
 
                                 return result
 
@@ -137,7 +139,7 @@ class ImportToDCA:
 
 		def wrapped( self, *args, **kwargs ):
 
-			if self._print_debug: print yellow( '@%s(%s)\t|%s| <-' ) % ( self.filter_versions_for_type_composant_interceptor.func_name, func.func_name, 'filter_versions_for_type_composant_interceptor.wrapped' )
+			if self._is_VERSION_FOR_TYPE_COMPOSANT_in_debug: print yellow( '@%s(%s)\t|%s| <-' ) % ( self.filter_versions_for_type_composant_interceptor.func_name, func.func_name, 'filter_versions_for_type_composant_interceptor.wrapped' )
 
 			deals_with_version_funcname = kwargs.get( 'deals_with_version_funcname', self._deals_with_version_default_funcname )
 
@@ -162,8 +164,6 @@ class ImportToDCA:
 		                                import traceback
                			                traceback.print_exc()
 						pass
-				print selected_version
-				print func.func_name
 				kwargs[ 'version_composant' ] = selected_version
 				result = func( self, *args, **kwargs )
 			except KeyboardException:
@@ -175,8 +175,7 @@ class ImportToDCA:
 				print '\t\t\tLe composant n\'est pas créé'
 				raise
 			finally:
-				print red( '%s %s' % ( func.func_name, kwargs[ 'version_composant' ] ) )
-				if self._print_debug: print yellow( '@%s(%s)\t|%s| -> %s' ) % ( self.filter_versions_for_type_composant_interceptor.func_name, func.func_name, 'filter_versions_for_type_composant_interceptor.wrapped', result )
+				if self._is_VERSION_FOR_TYPE_COMPOSANT_in_debug: print yellow( '@%s(%s)\t|%s| -> %s' ) % ( self.filter_versions_for_type_composant_interceptor.func_name, func.func_name, 'filter_versions_for_type_composant_interceptor.wrapped', result )
 				return result
 
 		return wrapped
@@ -201,6 +200,7 @@ class ImportToDCA:
 	@process_with_httpconn_loaded_interceptor
 	@process_with_env_ref_loaded_interceptor
 	@process_with_type_composant_ref_loaded_interceptor
+	@process_with_deployment_servername_ref_loaded_interceptor
 	@app_created_on_loop_interceptor
 	@env_created_on_loop_interceptor
 	@version_for_type_composant_created_on_loop_interceptor
@@ -234,6 +234,22 @@ class ImportToDCA:
 								ip_composant          		= composant[ 'ip_composant' ],
 								username_composant    		= composant[ 'username_composant' ],
 							)
+
+                                                for url in d_applis[ app_code ][ 'environnements' ][ type_env ][ 'urls' ]:
+
+                                                        self.create_composant_on_server_for_app_for_env (
+                                                                app_code                        = app_code,
+                                                                type_env                        = type_env,
+                                                                name_env                        = d_applis[ app_code ][ 'environnements' ][ type_env ][ 'name_env' ],
+                                                                type_composant                  = 'URL',
+                                                                name_composant                  = url[ 'url' ],
+                                                                version_composant               = url[ 'type_url' ],
+                                                                deployment_servername_composant = composant[ 'deployment_servername_composant' ],
+                                                                desc_app_court                  = d_applis[ app_code ][ 'desc_app_court' ],
+                                                                desc_app_long                   = d_applis[ app_code ][ 'desc_app_long' ],
+                                                                desc_env                        = d_applis[ app_code ][ 'environnements' ][ type_env ][ 'desc_env' ],
+                                                                desc_composant                  = url[ 'desc_url' ],
+                                                        )
 
 
 			if self._print_debug: print blue( '\t%s(...)\t|%s| -> %s' ) % ( self.import_to_dca.func_name, 'import_to_dca', result )
@@ -276,7 +292,6 @@ class ImportToDCA:
 		else:
 			result = True
 
-		print result
 		if self._print_debug: print green( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.app_exists.func_name, 'app_exists', result )
 
 		return result
@@ -285,7 +300,7 @@ class ImportToDCA:
 	@process_with_app_exists_interceptor( False )
 	def create_app( self, *args, **kwargs ):
 
-		if self._print_debug: print green( '\t\t\t%s(...)\t|%s| <-' ) % ( self.create_app.func_name, 'create_app' )
+		if self._is_APP_in_debug: print green( '\t\t\t%s(...)\t|%s| <-' ) % ( self.create_app.func_name, 'create_app' )
 
 		result = None
 
@@ -317,14 +332,14 @@ class ImportToDCA:
 		# Obligé de lire la réponse avant de pouvoir refaire une requête
 		self._httpconn.getresponse()
 
-		if self._print_debug: print green( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.create_app.func_name, 'create_app', result )
+		if self._is_APP_in_debug: print green( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.create_app.func_name, 'create_app', result )
 		return result
 
 
 	@process_with_httpconn_loaded_interceptor
 	def load_env_ref( self, *args, **kwargs ):
 
-		if self._print_debug: print red( '\t\t\t%s(...)\t|%s| <-' ) % ( self.load_env_ref.func_name, 'load_env_ref' )
+		if self._is_ENV_in_debug: print red( '\t\t\t%s(...)\t|%s| <-' ) % ( self.load_env_ref.func_name, 'load_env_ref' )
 
 		result = None
 
@@ -353,7 +368,7 @@ class ImportToDCA:
 				) 
 		)
 
-		if self._print_debug: print red( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.load_env_ref.func_name, 'load_env_ref', result )
+		if self._is_ENV_in_debug: print red( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.load_env_ref.func_name, 'load_env_ref', result )
 		return result
 
 	
@@ -366,7 +381,7 @@ class ImportToDCA:
 		pour l'app (app_code)
 		indiqué ou bien lève une exception"""
 
-		if self._print_debug: print red( '\t\t\t%s(...)\t|%s| <-' ) % ( self.get_id_env_for_app.func_name, 'get_id_env_for_app' )
+		if self._is_ENV_in_debug: print red( '\t\t\t%s(...)\t|%s| <-' ) % ( self.get_id_env_for_app.func_name, 'get_id_env_for_app' )
 
 		result = None
 
@@ -406,8 +421,7 @@ class ImportToDCA:
 			]
 		)[0]
 
-		if self._print_debug: print red( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.get_id_env_for_app.func_name, 'get_id_env_for_app', result )
-		print result
+		if self._is_ENV_in_debug: print red( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.get_id_env_for_app.func_name, 'get_id_env_for_app', result )
 
 		return result
 
@@ -425,7 +439,7 @@ class ImportToDCA:
 		comme résultat
 		"""
 
-		if self._print_debug: print red( '\t\t\t%s(...)\t|%s| <-' ) % ( self.create_env_for_app.func_name, 'create_env_for_app' )
+		if self._is_ENV_in_debug: print red( '\t\t\t%s(...)\t|%s| <-' ) % ( self.create_env_for_app.func_name, 'create_env_for_app' )
 
 		result = None
 
@@ -459,15 +473,14 @@ class ImportToDCA:
 
                 result = int ( fromstring( resp ).xpath( '/retour/IdEnv' )[0].text )
 
-		if self._print_debug: print red( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.create_env_for_app.func_name, 'create_env_for_app', result )
-		print result
+		if self._is_ENV_in_debug: print red( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.create_env_for_app.func_name, 'create_env_for_app', result )
 		return result
 
 	
         @process_with_httpconn_loaded_interceptor
         def load_type_composant_ref( self, *args, **kwargs ):
 
-		if self._print_debug: print cyan( '\t\t\t%s(...)\t|%s| <-' ) % ( self.load_type_composant_ref.func_name, 'load_type_composant_ref' )
+		if self._is_TYPE_COMPOSANT_in_debug: print cyan( '\t\t\t%s(...)\t|%s| <-' ) % ( self.load_type_composant_ref.func_name, 'load_type_composant_ref' )
 
 		result = None
 
@@ -569,7 +582,7 @@ class ImportToDCA:
 			)
 
 
-		if self._print_debug: print cyan( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.load_type_composant_ref.func_name, 'load_type_composant_ref', result )
+		if self._is_TYPE_COMPOSANT_in_debug: print cyan( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.load_type_composant_ref.func_name, 'load_type_composant_ref', result )
 
 		return result
 
@@ -578,7 +591,7 @@ class ImportToDCA:
 	@process_with_type_composant_ref_loaded_interceptor
 	def get_all_id_version_for_type_composant( self, *args, **kwargs ):
 
-		if self._print_debug: print cyan( '\t\t\t%s(...)\t|%s| <-' ) % ( self.get_all_id_version_for_type_composant.func_name, 'get_all_id_version_for_type_composant' )
+		if self._is_TYPE_COMPOSANT_in_debug: print cyan( '\t\t\t%s(...)\t|%s| <-' ) % ( self.get_all_id_version_for_type_composant.func_name, 'get_all_id_version_for_type_composant' )
 
 		result = None
 
@@ -617,8 +630,7 @@ class ImportToDCA:
 				)
 		)
 
-		if self._print_debug: print cyan( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.get_all_id_version_for_type_composant.func_name, 'get_all_id_version_for_type_composant', result )
-		print '\t\t\t%s' % ( result )
+		if self._is_TYPE_COMPOSANT_in_debug: print cyan( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.get_all_id_version_for_type_composant.func_name, 'get_all_id_version_for_type_composant', result )
 
 		return result
 
@@ -629,48 +641,92 @@ class ImportToDCA:
         @process_with_version_for_type_composant_exists_interceptor( False )
         def create_version_for_type_composant( self,  *args, **kwargs ):
 
-		if self._print_debug: print yellow( '\t\t\t%s(...)\t|%s| <-' ) % ( self.create_version_for_type_composant.func_name, 'create_version_for_type_composant' )
+		if self._is_VERSION_FOR_TYPE_COMPOSANT_in_debug: print yellow( '\t\t\t%s(...)\t|%s| <-' ) % ( self.create_version_for_type_composant.func_name, 'create_version_for_type_composant' )
 
-		result = 185
+		result = -1
 
-                self._httpconn.set_debuglevel( 9 )
+                self._httpconn.set_debuglevel( 0 )
 
 		type_composant 		= kwargs[ 'type_composant' ]
+		ensemble_composant 	= self._d_type_composant_ref[ type_composant ][ 'ensemble_composant' ]
 		version_composant 	= kwargs[ 'version_composant' ]
 
                 print 'Création de la version %s du type de composant %s' % ( type_composant, version_composant )
 
-                #desc_app_court = kwargs.get( 'desc_app_court', u'@TODO Décrire le nom court de %s'.encode( 'UTF-8' ) % ( app_code ) )
-                #desc_app_long  = kwargs.get( 'desc_app_long', u'@TODO Décrire le nom long de %s'.encode( 'UTF-8' ) % ( app_code ) )
+                get_params = urlencode(
+                        {
+                                u'TypeInstance'.encode( 'UTF-8' ): u'%s'.encode(' UTF-8' ) % ( ensemble_composant ),
+                                u'New'.encode( 'UTF-8' ): u'Oui'.encode(' UTF-8' ),
+                                u'NewType'.encode( 'UTF-8' ): u'Non'.encode(' UTF-8' ),
+                                u'NomType'.encode( 'UTF-8' ): u'%s'.encode(' UTF-8' ) % ( type_composant ),
+                                u'NewVersion'.encode( 'UTF-8' ): u'Oui'.encode(' UTF-8' ),
+                                u'NomVersion'.encode( 'UTF-8' ): u'%s'.encode(' UTF-8' ) % ( version_composant ),
+                        }
+                )
+		post_params = None
 
-                #get_params = None
-                #post_params = urlencode(
-                #        {
-                #                u'Code'.encode( 'UTF-8' ):              u'%s'.encode( 'UTF-8' ) % ( app_code ),
-                #                u'NomApp'.encode( 'UTF-8' ):            desc_app_court,
-                #                u'NomAppCourt'.encode( 'UTF-8' ):       desc_app_long
-                #        }
-                #)
-
-                #self._httpconn.request(
-                #        'POST',
-                #        u'/carto/applications/ajouter/ajouter_exec.php'.encode('UTF-8') ,
-                #        u'%s'.encode( 'UTF-8' ) % ( post_params ),
-                #        self._headers
-                #)
+                self._httpconn.request(
+                        'GET',
+                        u'/carto/lib/Exec_AddElementEnv.php?%s'.encode('UTF-8') % ( get_params ) ,
+                        u'%s'.encode( 'UTF-8' ) % ( post_params ),
+                        self._headers
+                )
 
                 # Obligé de lire la réponse avant de pouvoir refaire une requête
-                #self._httpconn.getresponse()
+                resp = self._httpconn.getresponse()
 
-		if self._print_debug: print yellow( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.create_version_for_type_composant.func_name, 'create_version_for_type_composant', result )
+		# L'identifiant n'est pas récupéré dans le flux de réponse
+		# Il est nécessaire de lancer une nouvelle recherche
+		result = self.get_all_id_version_for_type_composant( *args, **kwargs )[ version_composant ]
+
+		if self._is_VERSION_FOR_TYPE_COMPOSANT_in_debug: print yellow( '\t\t\t%s(...)\t|%s| -> %s' ) % ( self.create_version_for_type_composant.func_name, 'create_version_for_type_composant', result )
 
 		return result
+
+
+        @process_with_httpconn_loaded_interceptor
+        def load_deployment_servername_ref( self, *args, **kwargs ):
+
+                if self._is_DEPLOYMENT_SERVERNAME_in_debug: print green( '\t%s(...)\t|%s| <-' ) % ( self.load_deployment_servername_ref.func_name, 'load_deployment_servername_ref' )
+
+                result = None
+
+                self._httpconn.set_debuglevel( 0 )
+
+                get_params = None
+                post_params = None
+
+                self._httpconn.request(
+                        'GET',
+                        u'/carto/serveurs/ServeurListe.php',
+                        u'%s'.encode( 'UTF-8' ) % ( post_params ),
+                        self._headers
+                )
+
+                resp = self._httpconn.getresponse().read()
+
+		result = dict(
+				map( 
+					lambda e: ( e.text, re.match( 'ServeurVoir.php\?id=([0-9]*)', e.attrib[ 'href' ] ).group( 1 ) ),
+					[ 
+						e for e in HTMLParser( tree = treebuilders.getTreeBuilder( 'lxml' ) ).parse( resp ).xpath(
+							'*//html:table/html:tbody//html:a', namespaces=self._d_namespaces 
+						) if e.text is not None
+					]
+			)
+		)
+
+                if self._is_DEPLOYMENT_SERVERNAME_in_debug: print green( '\t%s(...)\t|%s| -> %s' ) % ( self.load_deployment_servername_ref.func_name, 'load_deployment_servername_ref', result )
+
+                return result
+
 
 	@process_with_httpconn_loaded_interceptor
 	@create_app_if_needed
 	@create_env_for_app_if_needed
 	@process_with_version_for_type_composant_loaded_interceptor
-	#@filter_versions_for_type_composant_interceptor
+	@process_with_deployment_servername_ref_loaded_interceptor
+	@filter_versions_for_type_composant_interceptor
 	@create_version_for_type_composant_if_needed
 	def create_composant_on_server_for_app_for_env( self, *args, **kwargs ):
 		"""
@@ -682,20 +738,46 @@ class ImportToDCA:
 		"""
 		if self._print_debug: print cyan( '\t%s(...)\t|%s|' ) % ( self.create_composant_on_server_for_app_for_env.func_name, 'create_composant_on_server_for_app_for_env' )
 
-	        app_code 		= kwargs[ 'app_code' ]
-                type_env 		= kwargs[ 'type_env' ]
-                name_env 		= kwargs[ 'name_env' ]
-                type_composant          = kwargs[ 'type_composant' ]
-                version_composant       = kwargs[ 'version_composant' ]
+	        result = None
+
+                self._httpconn.set_debuglevel( 0 )
+
+                type_composant          	= kwargs[ 'type_composant' ]
+
+                version_composant          	= kwargs[ 'version_composant' ]
+                ensemble_composant      	= self._d_type_composant_ref[ type_composant ][ 'ensemble_composant' ]
                 deployment_servername_composant = kwargs[ 'deployment_servername_composant' ]
+                name_composant              	= kwargs[ 'name_composant' ]
+                app_code          		= kwargs[ 'app_code' ]
+                type_env          		= kwargs[ 'type_env' ]
+                name_env          		= kwargs[ 'name_env' ]
+		id_version_composant		= self._d_type_composant_ref[ type_composant ][ 'versions' ][ version_composant ]
+		id_env				= self.get_id_env_for_app(  *args, **kwargs )
 
-		print "create_composant_on_server_for_app_for_env"
+                get_params = urlencode(
+                        {
+                                u'TypeInstance'.encode( 'UTF-8' ): u'%s'.encode(' UTF-8' ) % ( ensemble_composant ),
+                                u'New'.encode( 'UTF-8' ): u'Oui'.encode( ' UTF-8' ),
+                                u'New%s'.encode( 'UTF-8' ) % ( ensemble_composant ) : u'Oui'.encode( ' UTF-8' ),
+                                u'%s'.encode( 'UTF-8' ) % ( ensemble_composant ) : u'%s'.encode( ' UTF-8' ) % ( id_version_composant ),
+                                u'IdServeur'.encode( 'UTF-8' ): u'%s'.encode( ' UTF-8' ) % deployment_servername_composant ,
+                                u'NomInstance'.encode( 'UTF-8' ): u'%s'.encode( ' UTF-8' ) % ( name_composant ),
+                                u'IdEnv'.encode( 'UTF-8' ): u'%s'.encode( ' UTF-8' ) % ( id_env ),
+                                u'PortEcoute'.encode( 'UTF-8' ): u'3306'.encode( ' UTF-8' ),
+                        }
+                )
 
-		print version_composant
+                post_params = None
 
-		#if not version_composant:
-		#	print 'La version de composant n\'a pas été fournie'
-		#elif version_composant not in self._d_type_composant[ 'versions' ]:
-		#print self._d_type_composant_ref[ type_composant ][ 'versions' ].keys()
+                self._httpconn.request(
+                        'GET',
+                        u'/carto/lib/Exec_AddElementEnv.php?%s'.encode('UTF-8') % ( get_params ) ,
+                        u'%s'.encode( 'UTF-8' ) % ( post_params ),
+                        self._headers
+                )
+
+                resp = self._httpconn.getresponse().read()
+
+		if self._print_debug: print cyan( '\t%s(...)\t|%s| -> %s' ) % ( self.create_composant_on_server_for_app_for_env.func_name, 'create_composant_on_server_for_app_for_env', result )
 
 		return None
